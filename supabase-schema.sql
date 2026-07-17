@@ -62,3 +62,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 7. Disable Row Level Security (RLS) for demo client access
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE receipts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE cart_items DISABLE ROW LEVEL SECURITY;
+
+
