@@ -197,7 +197,7 @@ export default function AdminScreen() {
                       <td className="px-6 py-4 text-[#7A8493]">{p.category}</td>
                       <td className="px-6 py-4 text-[#7A8493] font-mono text-xs">{p.barcode}</td>
                       <td className="px-6 py-4 text-right">
-                        <span className={`font-semibold px-2 py-1 rounded-lg text-xs ${
+                        <span className={`font-semibold px-2 py-1 rounded-lg text-xs whitespace-nowrap ${
                           p.stock < 10 ? 'bg-red-50 text-red-600 font-bold border border-red-200' : 'bg-black/5 text-[#0F2044]'
                         }`}>
                           {p.stock ?? 100} units
