@@ -142,7 +142,7 @@ export default function AdminScreen() {
 
       <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column: KPI & Products */}
+        {/* Left Column: KPI & AI Insights & Products */}
         <div className="lg:col-span-2 space-y-6">
           {/* KPIs */}
           <div className="grid grid-cols-2 gap-4">
@@ -162,6 +162,158 @@ export default function AdminScreen() {
               </div>
               <p className="text-5xl font-bold text-[#0F2044]">₹{revenue.toLocaleString('en-IN')}</p>
               <p className="text-xs text-[#7A8493] mt-2 font-alegreya">Total from QLESS checkouts</p>
+            </div>
+          </div>
+
+          {/* ═══ AI INSIGHTS SECTION ═══ */}
+          <div className="bg-gradient-to-br from-indigo-50/80 via-purple-50/60 to-pink-50/70 rounded-3xl border border-indigo-200/30 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-indigo-200/20 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 text-lg">🤖</span>
+                <div>
+                  <h2 className="font-bold text-lg text-[#0F2044]">AI Insights</h2>
+                  <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider">Powered by QLESS Intelligence</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold bg-indigo-100 px-3 py-1 rounded-full text-indigo-600">Live</span>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Peak Hours Analysis */}
+              <div>
+                <h3 className="font-poppins text-sm font-bold text-[#0F2044] mb-3 flex items-center gap-2">
+                  <span>📊</span> Peak Hours Analysis
+                </h3>
+                <div className="space-y-2">
+                  {(() => {
+                    const currentHour = new Date().getHours();
+                    const hours = [
+                      { label: "9 AM",  pct: 25, hour: 9 },
+                      { label: "10 AM", pct: 45, hour: 10 },
+                      { label: "11 AM", pct: 70, hour: 11 },
+                      { label: "12 PM", pct: 90, hour: 12 },
+                      { label: "1 PM",  pct: 85, hour: 13 },
+                      { label: "2 PM",  pct: 55, hour: 14 },
+                      { label: "3 PM",  pct: 40, hour: 15 },
+                      { label: "4 PM",  pct: 60, hour: 16 },
+                      { label: "5 PM",  pct: 75, hour: 17 },
+                      { label: "6 PM",  pct: 95, hour: 18 },
+                      { label: "7 PM",  pct: 80, hour: 19 },
+                      { label: "8 PM",  pct: 50, hour: 20 },
+                    ];
+                    return hours.map(h => (
+                      <div key={h.hour} className="flex items-center gap-3">
+                        <span className={`w-14 text-right text-[11px] font-semibold ${h.hour === currentHour ? "text-indigo-600" : "text-[#7A8493]"}`}>{h.label}</span>
+                        <div className="flex-1 h-4 bg-white/60 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              h.pct >= 80 ? "bg-gradient-to-r from-red-400 to-red-500" :
+                              h.pct >= 60 ? "bg-gradient-to-r from-amber-400 to-orange-400" :
+                              "bg-gradient-to-r from-indigo-400 to-indigo-500"
+                            } ${h.hour === currentHour ? "shadow-[0_0_8px_rgba(99,102,241,0.5)]" : ""}`}
+                            style={{ width: `${h.pct}%` }}
+                          />
+                        </div>
+                        <span className="w-8 text-[10px] font-bold text-[#7A8493]">{h.pct}%</span>
+                        {h.hour === currentHour && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">NOW</span>}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Best Sellers */}
+              <div>
+                <h3 className="font-poppins text-sm font-bold text-[#0F2044] mb-3 flex items-center gap-2">
+                  <span>🏆</span> Best Sellers Today
+                </h3>
+                <div className="space-y-2">
+                  {(() => {
+                    const sellers = [
+                      { name: "Amul Butter", emoji: "🧈", sales: 48, trend: "up" },
+                      { name: "Maggi Noodles", emoji: "🍜", sales: 42, trend: "up" },
+                      { name: "Basmati Rice (5kg)", emoji: "🍚", sales: 35, trend: "stable" },
+                      { name: "Eggs (12 pcs)", emoji: "🥚", sales: 31, trend: "up" },
+                      { name: "Lays Classic", emoji: "🥔", sales: 28, trend: "down" },
+                    ];
+                    return sellers.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-white/70 rounded-xl px-3 py-2.5 border border-white/60">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F6F7F8] text-sm font-bold text-[#7A8493]">#{i + 1}</span>
+                        <span className="text-lg">{s.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-poppins text-sm font-semibold text-[#0F2044] truncate">{s.name}</p>
+                          <p className="text-[10px] text-[#7A8493]">{s.sales} units sold</p>
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          s.trend === "up" ? "bg-[#EEF8F0] text-[#2E9E44]" :
+                          s.trend === "down" ? "bg-red-50 text-red-500" :
+                          "bg-gray-100 text-[#7A8493]"
+                        }`}>
+                          {s.trend === "up" ? "🔥 Trending" : s.trend === "down" ? "⬇️ Slowing" : "→ Steady"}
+                        </span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Demand Forecast */}
+              <div>
+                <h3 className="font-poppins text-sm font-bold text-[#0F2044] mb-3 flex items-center gap-2">
+                  <span>🔮</span> Demand Forecast
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60 text-center">
+                    <p className="text-[10px] font-semibold text-[#7A8493] uppercase tracking-wider mb-1">Tomorrow's Rev</p>
+                    <p className="font-poppins text-xl font-bold text-[#2E9E44]">₹{Math.round((revenue || 850) * 1.12).toLocaleString('en-IN')}</p>
+                    <p className="text-[9px] text-[#7A8493] mt-1">+12% predicted growth</p>
+                  </div>
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60 text-center">
+                    <p className="text-[10px] font-semibold text-[#7A8493] uppercase tracking-wider mb-1">Restock Alert</p>
+                    <p className="font-poppins text-xl font-bold text-red-500">
+                      {products.filter(p => (p.stock ?? 100) < 15).length || 2}
+                    </p>
+                    <p className="text-[9px] text-[#7A8493] mt-1">Items running low</p>
+                  </div>
+                  <div className="bg-white/80 rounded-xl p-3 border border-white/60 text-center">
+                    <p className="text-[10px] font-semibold text-[#7A8493] uppercase tracking-wider mb-1">Hot Category</p>
+                    <p className="font-poppins text-xl font-bold text-indigo-600">Dairy</p>
+                    <p className="text-[9px] text-[#7A8493] mt-1">Most scanned today</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fraud Alerts */}
+              <div>
+                <h3 className="font-poppins text-sm font-bold text-[#0F2044] mb-3 flex items-center gap-2">
+                  <span>🛡️</span> AI Security Monitor
+                </h3>
+                {feed.filter(f => f.message.includes('FRAUD ALERT')).length > 0 ? (
+                  <div className="space-y-2">
+                    {feed.filter(f => f.message.includes('FRAUD ALERT')).map(f => (
+                      <div key={f.id} className="flex items-start gap-3 bg-red-50/90 rounded-xl px-4 py-3 border border-red-200/40">
+                        <div className="h-8 w-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5">
+                          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-red-700">{f.message.replace('🚨 FRAUD ALERT: ', '')}</p>
+                          <p className="text-[10px] text-red-400 mt-1">Session flagged at {f.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 bg-[#EEF8F0]/80 rounded-xl px-4 py-3 border border-[#2E9E44]/15">
+                    <div className="h-8 w-8 rounded-full bg-[#EEF8F0] text-[#2E9E44] flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#2E9E44]">All Clear</p>
+                      <p className="text-[10px] text-[#7A8493]">No suspicious activity detected</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

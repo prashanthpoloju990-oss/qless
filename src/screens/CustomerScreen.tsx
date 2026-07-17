@@ -174,6 +174,126 @@ function fmt(n: number) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI Feature 1: Smart Cart Recommendations
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PRODUCT_PAIRINGS: Record<string, string[]> = {
+  "Dairy":    ["Bread", "Eggs", "Butter"],
+  "Fruits":   ["Salt", "Snacks"],
+  "Grains":   ["Oil", "Spices", "Salt"],
+  "Spices":   ["Rice", "Oil", "Noodles"],
+  "Instant":  ["Eggs", "Oil", "Snacks"],
+  "Oils":     ["Rice", "Salt", "Spices"],
+  "Personal": ["Snacks", "Biscuits"],
+  "Snacks":   ["Noodles", "Biscuits", "Lays"],
+};
+
+// Name-based pairings for items without a category (like INITIAL_ITEMS)
+const NAME_PAIRINGS: Record<string, string[]> = {
+  "milk":   ["Bread", "Eggs (12 pcs)", "Amul Butter"],
+  "bread":  ["Amul Butter", "Eggs (12 pcs)", "Milk"],
+  "eggs":   ["Bread", "Maggi Noodles", "Sunflower Oil (1L)"],
+  "rice":   ["Sunflower Oil (1L)", "Tata Salt (1kg)"],
+  "butter": ["Bread", "Eggs (12 pcs)"],
+  "maggi":  ["Eggs (12 pcs)", "Lays Classic"],
+  "noodle": ["Eggs (12 pcs)", "Lays Classic"],
+  "oil":    ["Basmati Rice (5kg)", "Tata Salt (1kg)"],
+  "salt":   ["Basmati Rice (5kg)", "Sunflower Oil (1L)"],
+  "apple":  ["Tata Salt (1kg)", "Lays Classic"],
+  "lays":   ["Biscuits (Parle-G)", "Maggi Noodles"],
+  "biscuit":["Lays Classic", "Maggi Noodles"],
+  "colgate":["Lays Classic", "Biscuits (Parle-G)"],
+};
+
+function getRecommendations(items: CartItem[]): Product[] {
+  if (items.length < 2) return [];
+
+  const cartIds = new Set(items.map(i => i.id));
+  const cartNames = items.map(i => i.name.toLowerCase());
+  const suggestions = new Set<string>();
+
+  // Check category-based pairings
+  for (const item of items) {
+    const cat = (item as any).category as string | undefined;
+    if (cat && PRODUCT_PAIRINGS[cat]) {
+      PRODUCT_PAIRINGS[cat].forEach(s => suggestions.add(s.toLowerCase()));
+    }
+    // Check name-based pairings
+    for (const [key, pairs] of Object.entries(NAME_PAIRINGS)) {
+      if (item.name.toLowerCase().includes(key)) {
+        pairs.forEach(p => suggestions.add(p.toLowerCase()));
+      }
+    }
+  }
+
+  // Remove items already in cart
+  for (const name of cartNames) {
+    suggestions.delete(name);
+  }
+
+  // Match suggestion names to actual MOCK_PRODUCTS
+  const matched = MOCK_PRODUCTS.filter(p =>
+    !cartIds.has(p.id) && suggestions.has(p.name.toLowerCase())
+  );
+
+  return matched.slice(0, 3);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Feature 3: Fraud Detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface RemoveLogEntry {
+  productId: number;
+  name: string;
+  price: number;
+  timestamp: number;
+}
+
+interface FraudAlert {
+  id: number;
+  rule: string;
+  message: string;
+  severity: "warning" | "critical";
+  timestamp: string;
+}
+
+function checkFraudRules(removeLog: RemoveLogEntry[]): FraudAlert | null {
+  // Rule 1: Removing 3+ high-value items (price > ₹100) in one session
+  const highValueRemovals = removeLog.filter(e => e.price > 100);
+  if (highValueRemovals.length >= 3) {
+    const names = [...new Set(highValueRemovals.map(e => e.name))].join(", ");
+    return {
+      id: Date.now(),
+      rule: "HIGH_VALUE_REMOVE",
+      message: `🚨 ${highValueRemovals.length} high-value items removed: ${names}`,
+      severity: "critical",
+      timestamp: nowTime(),
+    };
+  }
+
+  // Rule 2: Same item added then removed 2+ times
+  const removeCounts: Record<number, number> = {};
+  for (const entry of removeLog) {
+    removeCounts[entry.productId] = (removeCounts[entry.productId] || 0) + 1;
+  }
+  for (const [pid, count] of Object.entries(removeCounts)) {
+    if (count >= 2) {
+      const item = removeLog.find(e => e.productId === Number(pid));
+      return {
+        id: Date.now(),
+        rule: "REPEAT_ADD_REMOVE",
+        message: `⚠️ "${item?.name}" added & removed ${count} times — possible scan fraud`,
+        severity: "warning",
+        timestamp: nowTime(),
+      };
+    }
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tiny icon components
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -565,14 +685,15 @@ function ShareModal({ open, onClose }: { open: boolean; onClose: () => void }) {
 function CartScreen({
   items, total, itemCount,
   onAddProduct, onQtyChange, onClear,
-  onShare, onCheckout,
+  onShare, onCheckout, fraudAlerts,
 }: {
   items: CartItem[]; total: number; itemCount: number;
   onAddProduct: (p: Product) => void; onQtyChange: (id: number, delta: number) => void; onClear: () => void;
-  onShare: () => void; onCheckout: () => void;
+  onShare: () => void; onCheckout: () => void; fraudAlerts: FraudAlert[];
 }) {
   const [scannerOpen, setScannerOpen] = useState(false);
   const { appliedCoupon, nextCoupon } = getCouponStatus(total);
+  const recommendations = useMemo(() => getRecommendations(items), [items]);
 
   return (
     <div className="flex flex-1 flex-col qless-fade-in">
@@ -639,6 +760,49 @@ function CartScreen({
                   </div>
                 </div>
               </article>
+            ))}
+          </div>
+        )}
+
+        {/* AI Recommendations Banner */}
+        {recommendations.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-indigo-200/40 bg-gradient-to-r from-indigo-50/90 via-purple-50/90 to-pink-50/90 p-4 shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-md">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 text-sm">🧠</span>
+              <h4 className="font-poppins text-sm font-bold text-[#0F2044]">AI Suggests</h4>
+              <span className="ml-auto text-[9px] font-semibold text-indigo-400 uppercase tracking-wider select-none">Based on your cart</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {recommendations.map(product => (
+                <button
+                  key={product.id}
+                  onClick={() => onAddProduct(product)}
+                  className="flex shrink-0 items-center gap-2 rounded-xl border border-white/60 bg-white/90 px-3 py-2.5 shadow-sm transition-all hover:scale-[1.03] hover:shadow-md active:scale-[0.97]"
+                >
+                  <span className="text-lg">{product.emoji}</span>
+                  <div className="text-left">
+                    <p className="font-poppins text-xs font-semibold text-[#0F2044] leading-tight whitespace-nowrap">{product.name}</p>
+                    <p className="text-[10px] text-[#2E9E44] font-bold">{fmt(product.price)}</p>
+                  </div>
+                  <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#2E9E44] text-white text-xs font-bold">+</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fraud Alerts (visible to customer as subtle warning) */}
+        {fraudAlerts.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {fraudAlerts.map(alert => (
+              <div key={alert.id} className={`rounded-xl border p-3 text-xs font-semibold backdrop-blur-sm ${
+                alert.severity === "critical"
+                  ? "border-red-300/50 bg-red-50/90 text-red-700"
+                  : "border-amber-300/50 bg-amber-50/90 text-amber-700"
+              }`}>
+                <p>{alert.message}</p>
+                <p className="text-[10px] font-normal mt-1 opacity-70">Session monitored by QLESS AI Security</p>
+              </div>
             ))}
           </div>
         )}
@@ -1029,6 +1193,8 @@ export default function CustomerScreen() {
   const [shareOpen, setShare]   = useState(false);
   const [paidAt, setPaidAt]     = useState("");
   const [paidTotal, setPaidTotal] = useState<number | null>(null);
+  const [removeLog, setRemoveLog] = useState<RemoveLogEntry[]>([]);
+  const [fraudAlerts, setFraudAlerts] = useState<FraudAlert[]>([]);
   const navigate = useNavigate();
 
   const total = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items]);
@@ -1053,6 +1219,28 @@ export default function CustomerScreen() {
   };
 
   const changeQty = (id: number, delta: number) => {
+    // Track removals for fraud detection
+    if (delta < 0) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        const newLog = [...removeLog, { productId: id, name: item.name, price: item.price, timestamp: Date.now() }];
+        setRemoveLog(newLog);
+
+        // Check fraud rules
+        const alert = checkFraudRules(newLog);
+        if (alert && !fraudAlerts.find(a => a.rule === alert.rule)) {
+          setFraudAlerts(prev => [...prev, alert]);
+          // Fire to admin feed via Supabase
+          supabase.from('cart_items').insert([{
+            session_id: SESSION_ID,
+            product_id: 0,
+            product_name: `🚨 FRAUD ALERT: ${alert.message}`,
+            price: 0,
+            quantity: 0
+          }]).then(() => {});
+        }
+      }
+    }
     setItems(cur => cur.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i).filter(i => i.quantity > 0));
   };
 
@@ -1103,6 +1291,7 @@ export default function CustomerScreen() {
             items={items} total={total} itemCount={itemCount}
             onAddProduct={addProduct} onQtyChange={changeQty} onClear={() => setItems([])}
             onShare={() => setShare(true)} onCheckout={() => setView("checkout")}
+            fraudAlerts={fraudAlerts}
           />
         )}
 
