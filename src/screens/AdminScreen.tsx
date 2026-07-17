@@ -67,6 +67,16 @@ export default function AdminScreen() {
           }, ...prev].slice(0, 50));
         }
       })
+      // Listen to live stock updates
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, payload => {
+        setProducts(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+        setFeed(prev => [{
+          id: Date.now(),
+          type: 'cart',
+          message: `Stock level updated for ${payload.new.name} to ${payload.new.stock}`,
+          time: new Date().toLocaleTimeString()
+        }, ...prev].slice(0, 50));
+      })
       .subscribe();
 
     return () => {
@@ -139,6 +149,7 @@ export default function AdminScreen() {
                     <th className="px-6 py-3 font-medium">Product</th>
                     <th className="px-6 py-3 font-medium">Category</th>
                     <th className="px-6 py-3 font-medium">Barcode</th>
+                    <th className="px-6 py-3 text-right font-medium">Stock</th>
                     <th className="px-6 py-3 text-right font-medium">Price</th>
                   </tr>
                 </thead>
@@ -150,6 +161,13 @@ export default function AdminScreen() {
                       </td>
                       <td className="px-6 py-4 text-[#7A8493]">{p.category}</td>
                       <td className="px-6 py-4 text-[#7A8493] font-mono text-xs">{p.barcode}</td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`font-semibold px-2 py-1 rounded-lg text-xs ${
+                          p.stock < 10 ? 'bg-red-50 text-red-600 font-bold border border-red-200' : 'bg-black/5 text-[#0F2044]'
+                        }`}>
+                          {p.stock ?? 100} units
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-right font-bold text-[#2E9E44]">₹{p.price}</td>
                     </tr>
                   ))}

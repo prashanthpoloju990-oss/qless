@@ -761,7 +761,10 @@ export default function CustomerScreen() {
     setItems(cur => cur.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i).filter(i => i.quantity > 0));
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    // Call Supabase function to decay stock of items in cart
+    await supabase.rpc("decay_stock", { p_session_id: SESSION_ID });
+
     setPaidAt(nowTime());
     setView("exit");
   };
