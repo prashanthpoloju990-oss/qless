@@ -195,26 +195,30 @@ function BarcodeScannerModal({
     };
   }, [open]);
 
-  const handleScanSuccess = (decodedText: string) => {
-    setPhase(curr => {
-      if (curr !== "scanning") return curr;
-      
-      // Stop scanning once detected
-      if (scannerRef.current && scannerRef.current.getState() === 2) {
-        scannerRef.current.pause(true);
-      }
-      
-      let product = MOCK_PRODUCTS.find(p => p.barcode === decodedText);
-      if (!product) {
-        // Mock fallback for easy testing with random barcodes
-        const available = MOCK_PRODUCTS.filter(p => !existingIds.includes(p.id));
-        const pool = available.length > 0 ? available : MOCK_PRODUCTS;
-        product = pool[Math.floor(Math.random() * pool.length)];
-      }
-      
-      setDetected(product);
-      return "detected";
-    });
+  const handleScanSuccess = async (decodedText: string) => {
+    // Stop scanning immediately
+    if (scannerRef.current && scannerRef.current.getState() === 2) {
+      scannerRef.current.pause(true);
+    }
+    
+    // Query Supabase for the real product
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('barcode', decodedText)
+      .single();
+
+    let product = data;
+
+    if (error || !product) {
+      // Fallback to a random demo product if not found in DB
+      const available = MOCK_PRODUCTS.filter(p => !existingIds.includes(p.id));
+      const pool = available.length > 0 ? available : MOCK_PRODUCTS;
+      product = pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    setDetected(product as Product);
+    setPhase("detected");
   };
 
   const handleAdd = () => {
