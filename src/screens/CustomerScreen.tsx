@@ -156,12 +156,18 @@ function BarcodeScannerModal({
 
   // Scanner setup
   useEffect(() => {
+    let active = true;
+    let startTimeout: ReturnType<typeof setTimeout> | null = null;
+
     if (!open) {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {}).finally(() => {
-          scannerRef.current?.clear();
-          scannerRef.current = null;
-        });
+        const scanner = scannerRef.current;
+        scannerRef.current = null;
+        if (scanner.isScanning) {
+          scanner.stop().catch(() => {}).finally(() => {
+            try { scanner.clear(); } catch {}
+          });
+        }
       }
       return;
     }
@@ -171,28 +177,54 @@ function BarcodeScannerModal({
 
     const startScanner = async () => {
       try {
-        scannerRef.current = new Html5Qrcode("reader");
-        await scannerRef.current.start(
+        if (!active) return;
+        const html5Qrcode = new Html5Qrcode("reader");
+        scannerRef.current = html5Qrcode;
+        
+        await html5Qrcode.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
-          (decodedText) => handleScanSuccess(decodedText),
-          (err) => {} // ignore ongoing scan errors
+          (decodedText) => {
+            if (active) handleScanSuccess(decodedText);
+          },
+          () => {} // ignore ongoing scan errors
         );
+
+        if (!active) {
+          if (html5Qrcode.isScanning) {
+            await html5Qrcode.stop();
+            html5Qrcode.clear();
+          }
+        }
       } catch (err) {
-        console.error("Scanner failed to start", err);
+        if (active) {
+          console.error("Scanner failed to start", err);
+        }
       }
     };
     
     // Give DOM a tick to render #reader
-    setTimeout(startScanner, 100);
+    startTimeout = setTimeout(startScanner, 100);
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {}).finally(() => {
-          scannerRef.current?.clear();
+      active = false;
+      if (startTimeout) clearTimeout(startTimeout);
+      
+      const stopScanner = async () => {
+        if (scannerRef.current) {
+          const scanner = scannerRef.current;
           scannerRef.current = null;
-        });
-      }
+          if (scanner.isScanning) {
+            try {
+              await scanner.stop();
+              scanner.clear();
+            } catch (err) {
+              console.error("Failed to stop scanner", err);
+            }
+          }
+        }
+      };
+      stopScanner();
     };
   }, [open]);
 
@@ -207,7 +239,7 @@ function BarcodeScannerModal({
       .from('products')
       .select('*')
       .eq('barcode', decodedText)
-      .single();
+      .maybeSingle();
 
     let product = data;
 

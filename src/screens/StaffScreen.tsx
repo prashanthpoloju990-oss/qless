@@ -26,30 +26,59 @@ export default function StaffScreen() {
   useEffect(() => {
     if (!isLoggedIn) return;
 
+    let active = true;
+    let startTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const startScanner = async () => {
       try {
-        scannerRef.current = new Html5Qrcode("staff-reader");
-        await scannerRef.current.start(
+        if (!active) return;
+        const html5Qrcode = new Html5Qrcode("staff-reader");
+        scannerRef.current = html5Qrcode;
+        
+        await html5Qrcode.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => handleScan(decodedText),
+          (decodedText) => {
+            if (active) handleScan(decodedText);
+          },
           () => {} // ignore errors
         );
+
+        if (!active) {
+          if (html5Qrcode.isScanning) {
+            await html5Qrcode.stop();
+            html5Qrcode.clear();
+          }
+        }
       } catch (err) {
-        console.error(err);
+        if (active) {
+          console.error("Scanner failed to start", err);
+        }
       }
     };
     
     // small delay for DOM
-    setTimeout(startScanner, 100);
+    startTimeout = setTimeout(startScanner, 100);
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {}).finally(() => {
-          scannerRef.current?.clear();
+      active = false;
+      if (startTimeout) clearTimeout(startTimeout);
+      
+      const stopScanner = async () => {
+        if (scannerRef.current) {
+          const scanner = scannerRef.current;
           scannerRef.current = null;
-        });
-      }
+          if (scanner.isScanning) {
+            try {
+              await scanner.stop();
+              scanner.clear();
+            } catch (err) {
+              console.error("Failed to stop scanner", err);
+            }
+          }
+        }
+      };
+      stopScanner();
     };
   }, [isLoggedIn]);
 
@@ -67,7 +96,7 @@ export default function StaffScreen() {
       .from('receipts')
       .select('*')
       .eq('id', decodedText)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       setScanState("error");
