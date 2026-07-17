@@ -285,7 +285,7 @@ function BarcodeScannerModal({
         
         await html5Qrcode.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+          { fps: 20, aspectRatio: 1.0 },
           (decodedText) => {
             if (active) handleScanSuccess(decodedText);
           },
@@ -346,10 +346,16 @@ function BarcodeScannerModal({
     let product = data;
 
     if (error || !product) {
-      // Fallback to a random demo product if not found in DB
-      const available = MOCK_PRODUCTS.filter(p => !existingIds.includes(p.id));
-      const pool = available.length > 0 ? available : MOCK_PRODUCTS;
-      product = pool[Math.floor(Math.random() * pool.length)];
+      // First check if the barcode matches any mock product exactly
+      const matchedMock = MOCK_PRODUCTS.find(p => p.barcode === decodedText);
+      if (matchedMock) {
+        product = matchedMock;
+      } else {
+        // Fallback to a random demo product if not found in DB or mock catalog
+        const available = MOCK_PRODUCTS.filter(p => !existingIds.includes(p.id));
+        const pool = available.length > 0 ? available : MOCK_PRODUCTS;
+        product = pool[Math.floor(Math.random() * pool.length)];
+      }
     } else {
       product = enrichProductInfo(product);
     }
@@ -883,9 +889,9 @@ function ExitScreen({
   useEffect(() => {
     if (!receiptId) return;
 
-    // 2. Listen for verification by staff
+    // 2. Listen for verification by staff (Realtime WebSocket)
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(`receipt-sync-${receiptId}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'receipts', filter: `id=eq.${receiptId}` },
@@ -897,8 +903,23 @@ function ExitScreen({
       )
       .subscribe();
 
+    // 3. Fallback Polling (checks every 2 seconds for high reliability)
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('receipts')
+        .select('status')
+        .eq('id', receiptId)
+        .maybeSingle();
+
+      if (data && data.status === 'verified') {
+        setScanState('success');
+        clearInterval(interval);
+      }
+    }, 2000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, [receiptId]);
 

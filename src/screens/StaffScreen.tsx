@@ -37,7 +37,7 @@ export default function StaffScreen() {
         
         await html5Qrcode.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 20 },
           (decodedText) => {
             if (active) handleScan(decodedText);
           },
