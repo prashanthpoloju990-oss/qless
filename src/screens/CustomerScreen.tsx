@@ -923,8 +923,6 @@ function ExitScreen({
     };
   }, [receiptId]);
 
-  const receiptStr = receiptId ? receiptId : `RECEIPT_PENDING`;
-
   if (scanState === "success") {
     return (
       <div className="flex flex-grow flex-col justify-center items-center qless-fade-in pb-20 text-center">
@@ -962,6 +960,22 @@ function ExitScreen({
     );
   }
 
+  // Show loading spinner until the receipt is created in Supabase
+  if (!receiptId) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center qless-fade-in">
+        <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#EEF8F0]">
+          <svg className="h-10 w-10 animate-spin text-[#2E9E44]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+          </svg>
+        </div>
+        <h3 className="mt-6 font-poppins text-xl font-semibold text-[#0F2044]">Creating Receipt...</h3>
+        <p className="mt-2 font-alegreya text-[#7A8493]">Please wait a moment</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col qless-fade-in pb-20">
       <div className="mb-6 text-center">
@@ -972,7 +986,7 @@ function ExitScreen({
       <div className="qless-scale-in">
         <div className="mx-auto w-full max-w-[320px] rounded-3xl border border-white/60 bg-white/90 p-8 text-center shadow-[0_16px_40px_rgba(15,32,68,0.12)] backdrop-blur-xl">
           <div className="mx-auto mb-6 flex aspect-square w-full items-center justify-center rounded-2xl bg-white shadow-inner p-4 border border-[#E5E7EB]">
-            <QRCode value={receiptStr} size={220} fgColor="#0F2044" bgColor="transparent" title="Exit Receipt QR" />
+            <QRCode value={receiptId} size={220} fgColor="#0F2044" bgColor="transparent" title="Exit Receipt QR" />
           </div>
           
           <h3 className="font-poppins text-2xl font-bold text-[#0F2044] mb-1">Receipt {RECEIPT_ID}</h3>

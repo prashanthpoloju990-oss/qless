@@ -91,16 +91,38 @@ export default function StaffScreen() {
     setScanState("verifying");
     setScannedReceiptId(decodedText);
 
-    // Verify in supabase
-    const { data, error } = await supabase
-      .from('receipts')
-      .select('*')
-      .eq('id', decodedText)
-      .maybeSingle();
+    // Retry logic — receipt may take a moment to propagate in Supabase
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // ms
 
-    if (error || !data) {
-      setScanState("error");
-    } else {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const { data, error } = await supabase
+        .from('receipts')
+        .select('*')
+        .eq('id', decodedText)
+        .maybeSingle();
+
+      if (error) {
+        // On network errors, retry
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY));
+          continue;
+        }
+        setScanState("error");
+        return;
+      }
+
+      if (!data) {
+        // Receipt not found yet, wait and retry
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY));
+          continue;
+        }
+        setScanState("error");
+        return;
+      }
+
+      // Found the receipt
       if (data.status === 'paid') {
         // Mark as verified
         await supabase
@@ -108,11 +130,14 @@ export default function StaffScreen() {
           .update({ status: 'verified' })
           .eq('id', decodedText);
         setScanState("success");
+        return;
       } else if (data.status === 'verified') {
         // Already verified
         setScanState("success");
+        return;
       } else {
         setScanState("error");
+        return;
       }
     }
   };
