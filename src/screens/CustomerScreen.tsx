@@ -18,7 +18,78 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  offer?: string;
+  expiryDays: number;
+  freshnessScore: number;
+  recommendation: string;
 }
+
+// Full mock product catalog — each has a fake barcode string
+interface Product extends Omit<CartItem, "quantity"> {
+  barcode: string;
+  category: string;
+  emoji: string;
+}
+
+const enrichProductInfo = (prod: any) => {
+  const name = prod.name.toLowerCase();
+  let expiryDays = 14;
+  let freshnessScore = 95;
+  let recommendation = "Best within 2 weeks";
+
+  if (name.includes("milk")) {
+    expiryDays = 2;
+    freshnessScore = 92;
+    recommendation = "Consume today or tomorrow";
+  } else if (name.includes("bread")) {
+    expiryDays = 3;
+    freshnessScore = 88;
+    recommendation = "Best within 2 days";
+  } else if (name.includes("egg")) {
+    expiryDays = 10;
+    freshnessScore = 90;
+    recommendation = "Best within a week";
+  } else if (name.includes("apple") || name.includes("fruit")) {
+    expiryDays = 5;
+    freshnessScore = 85;
+    recommendation = "Eat now or soon";
+  } else if (name.includes("rice") || name.includes("grain")) {
+    expiryDays = 180;
+    freshnessScore = 100;
+    recommendation = "Highly shelf stable";
+  } else if (name.includes("butter") || name.includes("cheese")) {
+    expiryDays = 30;
+    freshnessScore = 95;
+    recommendation = "Best within 2-3 weeks";
+  } else if (name.includes("salt") || name.includes("spice")) {
+    expiryDays = 365;
+    freshnessScore = 100;
+    recommendation = "Shelf stable";
+  } else if (name.includes("noodle") || name.includes("maggi") || name.includes("instant")) {
+    expiryDays = 90;
+    freshnessScore = 98;
+    recommendation = "Best within 2 months";
+  } else if (name.includes("oil")) {
+    expiryDays = 120;
+    freshnessScore = 99;
+    recommendation = "Safe for 3-4 months";
+  } else if (name.includes("toothpaste") || name.includes("shampoo")) {
+    expiryDays = 730;
+    freshnessScore = 100;
+    recommendation = "Highly shelf stable";
+  } else if (name.includes("lays") || name.includes("biscuit") || name.includes("snack") || name.includes("cookie")) {
+    expiryDays = 45;
+    freshnessScore = 96;
+    recommendation = "Best within a month";
+  }
+
+  return {
+    ...prod,
+    expiryDays,
+    freshnessScore,
+    recommendation
+  };
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -28,34 +99,65 @@ const SESSION_ID = "A123"; // Or use crypto.randomUUID().substring(0,8)
 const RECEIPT_ID = "#QL12345";
 
 const INITIAL_ITEMS: CartItem[] = [
-  { id: 1, name: "Milk",  price: 50, quantity: 1 },
-  { id: 2, name: "Bread", price: 40, quantity: 1 },
+  enrichProductInfo({ id: 1, name: "Milk",  price: 50, quantity: 1 }),
+  enrichProductInfo({ id: 2, name: "Bread", price: 40, quantity: 1 }),
 ];
 
-// Full mock product catalog — each has a fake barcode string
-interface Product extends Omit<CartItem, "quantity"> {
-  barcode: string;
-  category: string;
-  emoji: string;
-  offer?: string;
-}
-
 const MOCK_PRODUCTS: Product[] = [
-  { id: 3,  name: "Eggs (12 pcs)",      price: 72,  barcode: "8901030874322", category: "Dairy",    emoji: "🥚", offer: "Buy 1 Get 1" },
-  { id: 4,  name: "Apples (1 kg)",      price: 120, barcode: "8901072001422", category: "Fruits",   emoji: "🍎" },
-  { id: 5,  name: "Basmati Rice (5kg)", price: 380, barcode: "8904109600127", category: "Grains",   emoji: "🍚" },
-  { id: 6,  name: "Amul Butter",        price: 55,  barcode: "8901063103765", category: "Dairy",    emoji: "🧈", offer: "₹5 OFF" },
-  { id: 7,  name: "Tata Salt (1kg)",    price: 24,  barcode: "8901058003345", category: "Spices",   emoji: "🧂" },
-  { id: 8,  name: "Maggi Noodles",      price: 14,  barcode: "8901058009989", category: "Instant",  emoji: "🍜" },
-  { id: 9,  name: "Sunflower Oil (1L)", price: 148, barcode: "8906009510019", category: "Oils",     emoji: "🫙" },
-  { id: 10, name: "Colgate Toothpaste", price: 99,  barcode: "8718951233256", category: "Personal", emoji: "🪥" },
-  { id: 11, name: "Lays Classic",       price: 20,  barcode: "8901491503951", category: "Snacks",   emoji: "🥔" },
-  { id: 12, name: "Biscuits (Parle-G)", price: 10,  barcode: "8901063001101", category: "Snacks",   emoji: "🍪" },
+  enrichProductInfo({ id: 3,  name: "Eggs (12 pcs)",      price: 72,  barcode: "8901030874322", category: "Dairy",    emoji: "🥚", offer: "Buy 1 Get 1" }),
+  enrichProductInfo({ id: 4,  name: "Apples (1 kg)",      price: 120, barcode: "8901072001422", category: "Fruits",   emoji: "🍎" }),
+  enrichProductInfo({ id: 5,  name: "Basmati Rice (5kg)", price: 380, barcode: "8904109600127", category: "Grains",   emoji: "🍚" }),
+  enrichProductInfo({ id: 6,  name: "Amul Butter",        price: 55,  barcode: "8901063103765", category: "Dairy",    emoji: "🧈", offer: "₹5 OFF" }),
+  enrichProductInfo({ id: 7,  name: "Tata Salt (1kg)",    price: 24,  barcode: "8901058003345", category: "Spices",   emoji: "🧂" }),
+  enrichProductInfo({ id: 8,  name: "Maggi Noodles",      price: 14,  barcode: "8901058009989", category: "Instant",  emoji: "🍜" }),
+  enrichProductInfo({ id: 9,  name: "Sunflower Oil (1L)", price: 148, barcode: "8906009510019", category: "Oils",     emoji: "🫙" }),
+  enrichProductInfo({ id: 10, name: "Colgate Toothpaste", price: 99,  barcode: "8718951233256", category: "Personal", emoji: "🪥" }),
+  enrichProductInfo({ id: 11, name: "Lays Classic",       price: 20,  barcode: "8901491503951", category: "Snacks",   emoji: "🥔" }),
+  enrichProductInfo({ id: 12, name: "Biscuits (Parle-G)", price: 10,  barcode: "8901063001101", category: "Snacks",   emoji: "🍪" }),
 ];
 
 // (kept for potential future use — scanner uses MOCK_PRODUCTS directly)
 const _CATALOG: Omit<CartItem, "quantity">[] = MOCK_PRODUCTS.map(({ barcode: _b, category: _c, emoji: _e, ...rest }) => rest);
 void _CATALOG;
+
+interface CouponInfo {
+  code: string;
+  threshold: number;
+  discountType: "percent" | "flat";
+  discountValue: number;
+}
+
+const COUPONS: CouponInfo[] = [
+  { code: "SAVE10", threshold: 199, discountType: "percent", discountValue: 10 },
+  { code: "SAVE50", threshold: 499, discountType: "flat", discountValue: 50 },
+];
+
+const getCouponStatus = (subtotal: number) => {
+  let appliedCoupon: CouponInfo | null = null;
+  let maxDiscount = 0;
+
+  for (const coupon of COUPONS) {
+    if (subtotal >= coupon.threshold) {
+      const discount = coupon.discountType === "percent"
+        ? (subtotal * coupon.discountValue) / 100
+        : coupon.discountValue;
+      
+      if (discount > maxDiscount) {
+        maxDiscount = discount;
+        appliedCoupon = coupon;
+      }
+    }
+  }
+
+  const nextCoupon = COUPONS.find(c => subtotal < c.threshold);
+
+  return {
+    appliedCoupon,
+    discountAmount: maxDiscount,
+    finalTotal: Math.max(0, subtotal - maxDiscount),
+    nextCoupon,
+  };
+};
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   upi:    "UPI (GPay / PhonePe)",
@@ -248,6 +350,8 @@ function BarcodeScannerModal({
       const available = MOCK_PRODUCTS.filter(p => !existingIds.includes(p.id));
       const pool = available.length > 0 ? available : MOCK_PRODUCTS;
       product = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      product = enrichProductInfo(product);
     }
 
     setDetected(product as Product);
@@ -462,6 +566,7 @@ function CartScreen({
   onShare: () => void; onCheckout: () => void;
 }) {
   const [scannerOpen, setScannerOpen] = useState(false);
+  const { appliedCoupon, nextCoupon } = getCouponStatus(total);
 
   return (
     <div className="flex flex-1 flex-col qless-fade-in">
@@ -503,6 +608,21 @@ function CartScreen({
                       </span>
                     )}
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200/30 select-none">
+                      ⏳ Exp: {item.expiryDays}d
+                    </span>
+                    <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold border select-none ${
+                      item.freshnessScore >= 95 ? "bg-[#EEF8F0] text-[#2E9E44] border-[#2E9E44]/15" :
+                      item.freshnessScore >= 85 ? "bg-blue-50 text-blue-700 border-blue-200/30" :
+                      "bg-red-50 text-red-700 border-red-200/30"
+                    }`} title={item.recommendation}>
+                      ✨ Fresh: {item.freshnessScore}%
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[9px] text-[#8A94A3] font-alegreya italic leading-none select-none">
+                    * {item.recommendation}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <p className="font-poppins text-lg font-semibold text-[#0F2044]">{fmt(item.price * item.quantity)}</p>
@@ -521,6 +641,46 @@ function CartScreen({
       {/* Sticky bottom bar */}
       <div className="fixed inset-x-0 bottom-0 z-10 px-4 pb-4">
         <div className="mx-auto w-full max-w-[420px] rounded-t-2xl border border-white/50 bg-white/85 p-5 shadow-[0_-12px_34px_rgba(15,32,68,0.14)] backdrop-blur-xl">
+          {nextCoupon && total > 0 && (
+            <div className="mb-4 rounded-xl border border-dashed border-[#2E9E44]/30 bg-[#EEF8F0]/80 p-3 text-xs font-semibold backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-1 text-[#0F2044]">
+                <span className="flex items-center gap-1 select-none">
+                  🏷️ {appliedCoupon ? `Unlocked ${appliedCoupon.code}!` : "Unlock Special Offers"}
+                </span>
+                <span className="text-[#2E9E44]">
+                  Add {fmt(nextCoupon.threshold - total)} more
+                </span>
+              </div>
+              <div className="w-full bg-[#E5E7EB] h-1.5 rounded-full overflow-hidden mb-1">
+                <div 
+                  className="bg-[#2E9E44] h-full rounded-full transition-all duration-500" 
+                  style={{ width: `${Math.min(100, (total / nextCoupon.threshold) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-[#7A8493] font-normal leading-normal select-none">
+                {appliedCoupon 
+                  ? `You unlocked ${appliedCoupon.discountValue}${appliedCoupon.discountType === "percent" ? "%" : " " + fmt(1)} off. Get ${nextCoupon.discountValue}${nextCoupon.discountType === "percent" ? "%" : " " + fmt(1)} off by adding more!`
+                  : `Add items worth ${fmt(nextCoupon.threshold - total)} more to get ${nextCoupon.discountValue}% off with code ${nextCoupon.code}!`}
+              </p>
+            </div>
+          )}
+
+          {total >= 199 && !nextCoupon && (
+            <div className="mb-4 rounded-xl border border-dashed border-[#2E9E44]/30 bg-[#EEF8F0]/80 p-3 text-xs font-semibold backdrop-blur-sm">
+              <div className="flex items-center justify-between text-[#0F2044]">
+                <span className="flex items-center gap-1 select-none">
+                  🎉 Max Coupon Applied!
+                </span>
+                <span className="text-[#2E9E44] font-bold">
+                  {appliedCoupon?.code} Active
+                </span>
+              </div>
+              <p className="text-[10px] text-[#7A8493] font-normal leading-normal mt-1 select-none">
+                You have unlocked the maximum discount tier of {appliedCoupon?.discountValue}{appliedCoupon?.discountType === "percent" ? "%" : " " + fmt(1)} off!
+              </p>
+            </div>
+          )}
+
           <div className="mb-4 flex items-end justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[#8A94A3]">Total</p>
@@ -569,10 +729,11 @@ function CheckoutScreen({
   items, total, onBack, onPay,
 }: {
   items: CartItem[]; total: number;
-  onBack: () => void; onPay: () => void;
+  onBack: () => void; onPay: (discountedTotal: number) => void;
 }) {
   const [method, setMethod] = useState<PaymentMethod>("upi");
   const [payState, setPayState] = useState<"idle" | "processing" | "success">("idle");
+  const { appliedCoupon, discountAmount, finalTotal } = getCouponStatus(total);
 
   const handlePay = () => {
     setPayState("processing");
@@ -581,7 +742,7 @@ function CheckoutScreen({
       setPayState("success");
       // success duration
       setTimeout(() => {
-        onPay();
+        onPay(finalTotal);
       }, 1500);
     }, 1500);
   };
@@ -608,7 +769,7 @@ function CheckoutScreen({
           <svg viewBox="0 0 24 24" fill="none" className="h-12 w-12" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         </div>
         <h3 className="mt-6 font-poppins text-2xl font-semibold text-[#0F2044] qless-fade-in [animation-delay:200ms]">Payment Successful!</h3>
-        <p className="mt-2 font-poppins font-bold text-[#2E9E44] qless-fade-in [animation-delay:400ms]">{fmt(total)} Paid</p>
+        <p className="mt-2 font-poppins font-bold text-[#2E9E44] qless-fade-in [animation-delay:400ms]">{fmt(finalTotal)} Paid</p>
       </div>
     );
   }
@@ -639,9 +800,24 @@ function CheckoutScreen({
             </div>
           ))}
         </div>
-        <div className="mt-5 border-t border-black/5 pt-4 flex justify-between items-center">
-          <span className="font-alegreya text-sm font-semibold text-[#7A8493]">Grand Total</span>
-          <span className="font-poppins text-2xl font-bold text-[#2E9E44]">{fmt(total)}</span>
+        <div className="mt-5 border-t border-black/5 pt-4 space-y-2.5">
+          <div className="flex justify-between items-center text-sm">
+            <span className="font-alegreya text-[#7A8493]">Subtotal</span>
+            <span className="font-poppins font-semibold text-[#0F2044]">{fmt(total)}</span>
+          </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between items-center text-sm text-[#2E9E44]">
+              <span className="font-alegreya flex items-center gap-1">
+                🏷️ Discount ({appliedCoupon?.code})
+              </span>
+              <span className="font-poppins font-semibold font-bold">-{fmt(discountAmount)}</span>
+            </div>
+          )}
+          <div className="h-px bg-black/5" />
+          <div className="flex justify-between items-center">
+            <span className="font-alegreya text-base font-bold text-[#0F2044]">Grand Total</span>
+            <span className="font-poppins text-2xl font-bold text-[#2E9E44]">{fmt(finalTotal)}</span>
+          </div>
         </div>
       </div>
 
@@ -668,7 +844,7 @@ function CheckoutScreen({
             onClick={handlePay}
             className="flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-[#2E9E44] font-poppins text-base font-semibold text-white shadow-[0_10px_22px_rgba(46,158,68,0.25)] transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Pay {fmt(total)} Now
+            Pay {fmt(finalTotal)} Now
           </button>
         </div>
       </div>
@@ -817,6 +993,7 @@ export default function CustomerScreen() {
   const [items, setItems]       = useState<CartItem[]>(INITIAL_ITEMS);
   const [shareOpen, setShare]   = useState(false);
   const [paidAt, setPaidAt]     = useState("");
+  const [paidTotal, setPaidTotal] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const total = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items]);
@@ -844,10 +1021,11 @@ export default function CustomerScreen() {
     setItems(cur => cur.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i).filter(i => i.quantity > 0));
   };
 
-  const handlePay = async () => {
+  const handlePay = async (discountedTotal: number) => {
     // Call Supabase function to decay stock of items in cart
     await supabase.rpc("decay_stock", { p_session_id: SESSION_ID });
 
+    setPaidTotal(discountedTotal);
     setPaidAt(nowTime());
     setView("exit");
   };
@@ -856,6 +1034,7 @@ export default function CustomerScreen() {
     // Reset entire session
     setItems([]);
     setPaidAt("");
+    setPaidTotal(null);
     setView("cart");
   };
 
@@ -900,7 +1079,7 @@ export default function CustomerScreen() {
         )}
 
         {view === "exit" && (
-          <ExitScreen total={total} paidAt={paidAt} onDone={handleDone} sessionId={SESSION_ID} />
+          <ExitScreen total={paidTotal !== null ? paidTotal : total} paidAt={paidAt} onDone={handleDone} sessionId={SESSION_ID} />
         )}
 
         {/* Footer */}
