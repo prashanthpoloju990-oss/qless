@@ -728,6 +728,42 @@ function ExitScreen({
 
   const receiptStr = receiptId ? receiptId : `RECEIPT_PENDING`;
 
+  if (scanState === "success") {
+    return (
+      <div className="flex flex-grow flex-col justify-center items-center qless-fade-in pb-20 text-center">
+        <div className="mx-auto w-full max-w-[320px] rounded-3xl border border-white/60 bg-white/90 p-8 shadow-[0_16px_40px_rgba(15,32,68,0.12)] backdrop-blur-xl flex flex-col items-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2E9E44] text-white shadow-[0_8px_24px_rgba(46,158,68,0.3)] mb-6 animate-bounce">
+            <svg viewBox="0 0 24 24" fill="none" className="h-10 w-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          
+          <h2 className="font-poppins text-2xl font-bold text-[#0F2044] mb-2">Verification Done!</h2>
+          <p className="font-alegreya text-base text-[#7A8493] mb-6">You can leave the store now. Thank you for shopping with QLESS!</p>
+          
+          <div className="w-full space-y-3 border-t border-dashed border-[#CBD5E1] pt-5">
+            <div className="flex items-center justify-between">
+              <span className="font-alegreya text-sm text-[#7A8493]">Amount Paid</span>
+              <span className="font-poppins text-sm font-semibold text-[#2E9E44]">{fmt(total)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-alegreya text-sm text-[#7A8493]">Receipt ID</span>
+              <span className="font-poppins text-xs font-semibold text-[#0F2044] truncate max-w-[120px]" title={receiptId || ""}>
+                {receiptId ? receiptId.substring(0, 8) : "N/A"}...
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={onDone}
+          className="mt-8 flex h-12 w-full max-w-[320px] mx-auto items-center justify-center gap-2 rounded-xl bg-[#2E9E44] font-poppins text-sm font-semibold text-white shadow-[0_8px_20px_rgba(46,158,68,0.22)] transition hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Start New Session
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col qless-fade-in pb-20">
