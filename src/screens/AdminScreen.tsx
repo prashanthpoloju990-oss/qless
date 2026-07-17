@@ -9,6 +9,40 @@ export default function AdminScreen() {
   const [revenue, setRevenue] = useState(0);
   const [feed, setFeed] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editPrice, setEditPrice] = useState<number>(0);
+  const [editStock, setEditStock] = useState<number>(0);
+  const [editOffer, setEditOffer] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEditClick = (p: any) => {
+    setEditingProduct(p);
+    setEditPrice(p.price);
+    setEditStock(p.stock ?? 100);
+    setEditOffer(p.offer ?? "");
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    setIsSaving(true);
+
+    const { error } = await supabase
+      .from('products')
+      .update({
+        price: Number(editPrice),
+        stock: Number(editStock),
+        offer: editOffer || null
+      })
+      .eq('id', editingProduct.id);
+
+    setIsSaving(false);
+    if (!error) {
+      setEditingProduct(null);
+    } else {
+      alert("Error updating product: " + error.message);
+    }
+  };
 
   useEffect(() => {
     // Initial fetch of today's receipts for revenue
@@ -150,12 +184,13 @@ export default function AdminScreen() {
                     <th className="px-6 py-3 font-medium">Category</th>
                     <th className="px-6 py-3 font-medium">Barcode</th>
                     <th className="px-6 py-3 text-right font-medium">Stock</th>
+                    <th className="px-6 py-3 text-right font-medium">Offer</th>
                     <th className="px-6 py-3 text-right font-medium">Price</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5 text-sm">
                   {products.map(p => (
-                    <tr key={p.id} className="hover:bg-[#F9FAFB] transition">
+                    <tr key={p.id} className="hover:bg-[#F9FAFB] transition cursor-pointer" onClick={() => handleEditClick(p)}>
                       <td className="px-6 py-4 font-semibold text-[#0F2044] flex items-center gap-2">
                         <span className="text-xl">{p.emoji}</span> {p.name}
                       </td>
@@ -167,6 +202,15 @@ export default function AdminScreen() {
                         }`}>
                           {p.stock ?? 100} units
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {p.offer ? (
+                          <span className="font-bold text-xs bg-[#EEF8F0] text-[#2E9E44] px-2 py-1 rounded-lg border border-[#2E9E44]/15">
+                            {p.offer}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#7A8493] italic">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-[#2E9E44]">₹{p.price}</td>
                     </tr>
@@ -213,6 +257,72 @@ export default function AdminScreen() {
         </div>
 
       </main>
+
+      {/* Product Edit Modal */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-[420px] rounded-3xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="font-poppins text-lg font-bold text-[#0F2044] mb-1">
+              Edit Product Details
+            </h3>
+            <p className="text-xs text-[#7A8493] mb-6 flex items-center gap-1.5">
+              <span className="text-xl">{editingProduct.emoji}</span> {editingProduct.name}
+            </p>
+
+            <form onSubmit={handleSaveProduct} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#7A8493] uppercase tracking-wider mb-2">Price (₹)</label>
+                <input
+                  type="number"
+                  value={editPrice}
+                  onChange={e => setEditPrice(Number(e.target.value))}
+                  className="w-full h-12 px-4 rounded-xl border border-black/10 bg-[#F9FAFB] font-poppins focus:outline-none focus:border-[#2E9E44]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#7A8493] uppercase tracking-wider mb-2">Stock Level</label>
+                <input
+                  type="number"
+                  value={editStock}
+                  onChange={e => setEditStock(Number(e.target.value))}
+                  className="w-full h-12 px-4 rounded-xl border border-black/10 bg-[#F9FAFB] font-poppins focus:outline-none focus:border-[#2E9E44]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#7A8493] uppercase tracking-wider mb-2">Discount / Promo Offer</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 10% OFF, Buy 1 Get 1"
+                  value={editOffer}
+                  onChange={e => setEditOffer(e.target.value)}
+                  className="w-full h-12 px-4 rounded-xl border border-black/10 bg-[#F9FAFB] font-poppins focus:outline-none focus:border-[#2E9E44]"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="flex-1 h-12 rounded-xl border border-[#D8DDE3] bg-white text-[#7A8493] font-semibold transition hover:bg-[#F8F9FA]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 h-12 rounded-xl bg-[#2E9E44] text-white font-semibold shadow-lg hover:bg-[#288a3b] transition disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

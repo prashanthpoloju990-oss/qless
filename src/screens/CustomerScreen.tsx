@@ -37,13 +37,14 @@ interface Product extends Omit<CartItem, "quantity"> {
   barcode: string;
   category: string;
   emoji: string;
+  offer?: string;
 }
 
 const MOCK_PRODUCTS: Product[] = [
-  { id: 3,  name: "Eggs (12 pcs)",      price: 72,  barcode: "8901030874322", category: "Dairy",    emoji: "🥚" },
+  { id: 3,  name: "Eggs (12 pcs)",      price: 72,  barcode: "8901030874322", category: "Dairy",    emoji: "🥚", offer: "Buy 1 Get 1" },
   { id: 4,  name: "Apples (1 kg)",      price: 120, barcode: "8901072001422", category: "Fruits",   emoji: "🍎" },
   { id: 5,  name: "Basmati Rice (5kg)", price: 380, barcode: "8904109600127", category: "Grains",   emoji: "🍚" },
-  { id: 6,  name: "Amul Butter",        price: 55,  barcode: "8901063103765", category: "Dairy",    emoji: "🧈" },
+  { id: 6,  name: "Amul Butter",        price: 55,  barcode: "8901063103765", category: "Dairy",    emoji: "🧈", offer: "₹5 OFF" },
   { id: 7,  name: "Tata Salt (1kg)",    price: 24,  barcode: "8901058003345", category: "Spices",   emoji: "🧂" },
   { id: 8,  name: "Maggi Noodles",      price: 14,  barcode: "8901058009989", category: "Instant",  emoji: "🍜" },
   { id: 9,  name: "Sunflower Oil (1L)", price: 148, barcode: "8906009510019", category: "Oils",     emoji: "🫙" },
@@ -289,6 +290,11 @@ function BarcodeScannerModal({
                 <div className="text-center">
                   <p className="font-poppins text-base font-bold text-[#0F2044] leading-tight">{detected.name}</p>
                   <p className="mt-0.5 text-xs text-[#7A8493] font-alegreya">{detected.category} · {detected.barcode}</p>
+                  {detected.offer && (
+                    <span className="mt-1.5 inline-block text-[10px] font-bold uppercase tracking-wider bg-[#EEF8F0] text-[#2E9E44] border border-[#2E9E44]/20 px-2 py-0.5 rounded-md">
+                      {detected.offer}
+                    </span>
+                  )}
                   <p className="mt-1 font-poppins text-xl font-bold text-[#2E9E44]">{fmt(detected.price)}</p>
                 </div>
               </div>
@@ -454,8 +460,17 @@ function CartScreen({
             {items.map(item => (
               <article key={item.id} className="flex items-center justify-between rounded-2xl border border-white/50 bg-white/75 p-4 shadow-[0_8px_24px_rgba(15,32,68,0.08)] backdrop-blur-md transition duration-200 hover:scale-[1.01] hover:bg-white/85">
                 <div className="min-w-0 pr-4">
-                  <h3 className="truncate font-poppins text-base font-semibold text-[#0F2044]">{item.name}</h3>
-                  <p className="mt-0.5 text-sm text-[#7A8493]">{fmt(item.price)} each</p>
+                  <h3 className="truncate font-poppins text-base font-semibold text-[#0F2044] flex items-center gap-2">
+                    {item.name}
+                  </h3>
+                  <p className="mt-0.5 text-sm text-[#7A8493] flex items-center gap-2">
+                    {fmt(item.price)} each
+                    {(item as any).offer && (
+                      <span className="text-[9px] font-bold bg-[#EEF8F0] text-[#2E9E44] px-1.5 py-0.5 rounded border border-[#2E9E44]/15">
+                        {(item as any).offer}
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <p className="font-poppins text-lg font-semibold text-[#0F2044]">{fmt(item.price * item.quantity)}</p>
@@ -753,7 +768,7 @@ export default function CustomerScreen() {
       const ex = cur.find(i => i.id === product.id);
       return ex
         ? cur.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i)
-        : [...cur, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
+        : [...cur, { id: product.id, name: product.name, price: product.price, quantity: 1, offer: product.offer } as any];
     });
   };
 

@@ -28,21 +28,22 @@ CREATE TABLE products (
     barcode TEXT UNIQUE NOT NULL,
     category TEXT NOT NULL,
     emoji TEXT NOT NULL,
-    stock INTEGER DEFAULT 100
+    stock INTEGER DEFAULT 100,
+    offer TEXT
 );
 
 -- 4. Insert Mock Products
-INSERT INTO products (id, name, price, barcode, category, emoji, stock) VALUES
-  (3, 'Eggs (12 pcs)', 72, '8901030874322', 'Dairy', '🥚', 100),
-  (4, 'Apples (1 kg)', 120, '8901072001422', 'Fruits', '🍎', 100),
-  (5, 'Basmati Rice (5kg)', 380, '8904109600127', 'Grains', '🍚', 100),
-  (6, 'Amul Butter', 55, '8901063103765', 'Dairy', '🧈', 100),
-  (7, 'Tata Salt (1kg)', 24, '8901058003345', 'Spices', '🧂', 100),
-  (8, 'Maggi Noodles', 14, '8901058009989', 'Instant', '🍜', 100),
-  (9, 'Sunflower Oil (1L)', 148, '8906009510019', 'Oils', '🫙', 100),
-  (10, 'Colgate Toothpaste', 99, '8718951233256', 'Personal', '🪥', 100),
-  (11, 'Lays Classic', 20, '8901491503951', 'Snacks', '🥔', 100),
-  (12, 'Biscuits (Parle-G)', 10, '8901063001101', 'Snacks', '🍪', 100)
+INSERT INTO products (id, name, price, barcode, category, emoji, stock, offer) VALUES
+  (3, 'Eggs (12 pcs)', 72, '8901030874322', 'Dairy', '🥚', 100, 'Buy 1 Get 1'),
+  (4, 'Apples (1 kg)', 120, '8901072001422', 'Fruits', '🍎', 100, NULL),
+  (5, 'Basmati Rice (5kg)', 380, '8904109600127', 'Grains', '🍚', 100, NULL),
+  (6, 'Amul Butter', 55, '8901063103765', 'Dairy', '🧈', 100, '₹5 OFF'),
+  (7, 'Tata Salt (1kg)', 24, '8901058003345', 'Spices', '🧂', 100, NULL),
+  (8, 'Maggi Noodles', 14, '8901058009989', 'Instant', '🍜', 100, NULL),
+  (9, 'Sunflower Oil (1L)', 148, '8906009510019', 'Oils', '🫙', 100, NULL),
+  (10, 'Colgate Toothpaste', 99, '8718951233256', 'Personal', '🪥', 100, NULL),
+  (11, 'Lays Classic', 20, '8901491503951', 'Snacks', '🥔', 100, NULL),
+  (12, 'Biscuits (Parle-G)', 10, '8901063001101', 'Snacks', '🍪', 100, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- 5. Enable Realtime for all tables
